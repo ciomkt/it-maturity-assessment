@@ -280,6 +280,40 @@ body {
   letter-spacing: 0.01em;
 }
 .btn-primary:hover { background: var(--navy2); transform: translateY(-1px); }
+.client-field {
+  max-width: 380px;
+  margin: 0 auto 28px;
+  text-align: left;
+}
+.client-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 6px;
+}
+.client-field input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--navy);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+}
+.client-field input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+.report-client {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 6px;
+}
 .disclaimer {
   margin-top: 24px;
   font-size: 12px;
@@ -886,6 +920,10 @@ body {
       <div class="intro-meta-item"><span class="val">4</span><span class="lbl">Pages of 5</span></div>
       <div class="intro-meta-item"><span class="val">~8</span><span class="lbl">Minutes</span></div>
     </div>
+    <div class="client-field">
+      <label for="clientName">Company name</label>
+      <input type="text" id="clientName" maxlength="80" placeholder="e.g. Acme Manufacturing" autocomplete="organization">
+    </div>
     <button class="btn-primary" id="introBtn" onclick="startAssessment()">Start Assessment →</button>
     <p class="disclaimer">Prepared by CIO Landing · No login required · Results stay in your browser</p>
   </div>
@@ -1156,6 +1194,11 @@ const TOTAL_PAGES = Math.ceil(ITEMS.length / PAGE_SIZE); // 20 / 5 = 4
 // ── STATE ────────────────────────────────────────────────────────────────────
 let currentPageIdx = 0;
 let answers = {}; // { itemId: 'full' | 'partial' | 'none' }
+let clientName = '';
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+}
 
 // ── NAVIGATION ───────────────────────────────────────────────────────────────
 function setPhase(phase) {
@@ -1165,6 +1208,8 @@ function setPhase(phase) {
 }
 
 function startAssessment() {
+  const nameInput = document.getElementById('clientName');
+  clientName = nameInput ? nameInput.value.trim() : '';
   // Only reset if there's no in-progress assessment — this lets someone who
   // returns to the main page pick up right where they left off.
   if (Object.keys(answers).length === 0) {
@@ -1379,6 +1424,7 @@ function generateReport() {
         <div class="score-grade" style="background:${grade.bg};color:${grade.color}">${grade.label}</div>
       </div>
       <div class="report-hero-text">
+        ${clientName ? `<div class="report-client">Prepared for ${escapeHtml(clientName)}</div>` : ''}
         <h2>Your IT Maturity Score</h2>
         <p>Your environment scores <strong style="color:#fff">${pct} out of 100</strong> across 20 control items. 
         ${pct >= 85 ? 'Your IT environment is well-managed. Focus on the remaining gaps to maintain strong posture.' :
@@ -1668,7 +1714,7 @@ function buildCoverPageEl() {
         </div>
         ${gradeLabel ? `<div class="cover-score-grade" style="background:${gradeBg};color:${gradeColor}">${gradeLabel}</div>` : ''}
       </div>` : ''}
-      <div class="cover-meta" style="margin-top:28px;">Report date: ${dateStr}</div>
+      <div class="cover-meta" style="margin-top:28px;">${clientName ? `Prepared for: <strong style="color:#fff">${escapeHtml(clientName)}</strong><br>` : ''}Report date: ${dateStr}</div>
     </div>
     <div class="cover-bottom">
       <div class="cover-brand">Prepared by CIO Landing</div>
@@ -1748,7 +1794,8 @@ function downloadReport() {
 
     const now = new Date();
     const dateStr = now.toISOString().slice(0,10);
-    pdf.save(`CIOLanding_IT_Maturity_Assessment_${dateStr}.pdf`);
+    const safeClient = clientName.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+    pdf.save(`CIOLanding_IT_Maturity_Assessment_${safeClient ? safeClient + '_' : ''}${dateStr}.pdf`);
 
     dlRow.style.display = '';
     btn.innerHTML = origText;
@@ -1767,9 +1814,9 @@ function downloadReport() {
 </script>
 
 <footer class="site-footer">
-  <span class="ver">v4.0</span>
+  <span class="ver">v4.1</span>
   <span class="dot">·</span>
-  <span>Last updated: August 24, 2026</span>
+  <span>Last updated: October 8, 2026</span>
   <span class="dot">·</span>
   <span>© 2026 CIO Landing — I.T. Simplified</span>
 </footer>
